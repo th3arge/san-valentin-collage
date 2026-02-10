@@ -1,50 +1,47 @@
-// Subir foto a Cloudinary
-function subirFoto() {
+// Firebase desde CDN (correcto para HTML simple)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+// Configuración REAL de tu proyecto
+const firebaseConfig = {
+  apiKey: "AIzaSyAxwLpjZ76pPyW552AD_yZh_siogjr2EsE",
+  authDomain: "subir-fotos-web.firebaseapp.com",
+  projectId: "subir-fotos-web",
+  storageBucket: "subir-fotos-web.appspot.com",
+  messagingSenderId: "499087561438",
+  appId: "1:499087561438:web:5ab3fae225467df6c5684f"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+
+// Función para subir foto
+window.subirFoto = function () {
   const input = document.getElementById("foto");
   const estado = document.getElementById("estado");
-  const collage = document.getElementById("collage");
+  const imagen = document.getElementById("imagen");
 
   const archivo = input.files[0];
 
   if (!archivo) {
-    estado.textContent = "Selecciona una foto 💔";
+    estado.textContent = "Selecciona una foto primero ❌";
     return;
   }
 
-  estado.textContent = "Subiendo tu foto... 💘";
+  estado.textContent = "Subiendo foto... ⏳";
 
-  const formData = new FormData();
-  formData.append("file", archivo);
-  formData.append("upload_preset", "public_upload");
+  const referencia = ref(storage, "fotos/" + Date.now() + "_" + archivo.name);
 
-  fetch("https://api.cloudinary.com/v1_1/du4n5yo04/image/upload", {
-    method: "POST",
-    body: formData
-  })
-    .then(res => res.json())
-    .then(data => {
-      const img = document.createElement("img");
-      img.src = data.secure_url;
-      collage.prepend(img);
-      estado.textContent = "💖 Foto agregada al collage";
-      input.value = "";
+  uploadBytes(referencia, archivo)
+    .then(() => getDownloadURL(referencia))
+    .then((url) => {
+      imagen.src = url;
+      estado.innerHTML = `✅ Foto subida <br>
+      <a href="${url}" target="_blank">Ver imagen</a>`;
     })
-    .catch(() => {
+    .catch((error) => {
       estado.textContent = "Error al subir ❌";
+      console.error(error);
     });
-}
-
-// CORAZONES FLOTANDO ❤️
-const hearts = document.querySelector(".hearts");
-
-setInterval(() => {
-  const heart = document.createElement("span");
-  heart.innerHTML = "❤️";
-  heart.style.left = Math.random() * 100 + "vw";
-  heart.style.animationDuration = 3 + Math.random() * 3 + "s";
-  hearts.appendChild(heart);
-
-  setTimeout(() => {
-    heart.remove();
-  }, 6000);
-}, 400);
+};
